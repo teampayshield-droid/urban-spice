@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  sortOrder Int        @default(0)
+  items     MenuItem[]
+  createdAt DateTime   @default(now())
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  imageUrl    String
+  isVeg       Boolean     @default(true)
+  isAvailable Boolean     @default(true)
+  isHotSeller Boolean     @default(false)
+  isTopSelling Boolean    @default(false)
+  isRestaurantSpecial Boolean @default(false)
+  specialDiscountPercent Int @default(0)
+  specialDiscountDate String?
+  prepTime    Int         @default(15)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  likes       MenuItemLike[]
+  createdAt   DateTime    @default(now())
+}
+
+model MenuItemLike {
+  id         String   @id @default(cuid())
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  visitorId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([menuItemId, visitorId])
+  @@index([createdAt])
+}
+
+model Table {
+  id        String   @id @default(cuid())
+  number    Int      @unique
+  orders    Order[]
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+  tableId     String
+  table       Table       @relation(fields: [tableId], references: [id])
+  items       OrderItem[]
+  subtotal    Float
+  gstAmount   Float
+  total       Float
+  paymentMethod String @default("CASH")
+  paymentStatus String @default("PENDING")
+  status      String      @default("RECEIVED")
+  prepTime    Int         @default(15)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id         String    @id @default(cuid())
+  orderId    String
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id])
+  name       String
+  price      Float
+  quantity   Int
+}
+
+model Settings {
+  id             String @id @default("settings")
+  restaurantName String @default("Urban Spice")
+  gstPercent     Float  @default(5)
+}
