@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
