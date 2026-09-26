@@ -15,6 +15,7 @@ function MenuContent({ tableNumber }: { tableNumber: string }) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [tableValid, setTableValid] = useState<boolean | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [gstPercent, setGstPercent] = useState(5);
@@ -22,21 +23,28 @@ function MenuContent({ tableNumber }: { tableNumber: string }) {
 
   useEffect(() => {
     async function load() {
-      const visitorId = getVisitorId();
-      const [tablesRes, catRes, settingsRes] = await Promise.all([
-        fetch("/api/tables"),
-        fetch(`/api/categories?visitorId=${encodeURIComponent(visitorId)}`),
-        fetch("/api/settings"),
-      ]);
-      const tables = await tablesRes.json();
-      const cats = await catRes.json();
-      const settings = await settingsRes.json();
-      const valid = tables.some((t: any) => String(t.number) === tableNumber);
-      setTableValid(valid);
-      setCategories(cats);
-      setGstPercent(settings.gstPercent);
-      if (cats.length > 0) setActiveCategory(cats[0].id);
-      setLoading(false);
+      try {
+        const visitorId = getVisitorId();
+        const responses = await Promise.all([
+          fetch("/api/tables"),
+          fetch(`/api/categories?visitorId=${encodeURIComponent(visitorId)}`),
+          fetch("/api/settings"),
+        ]);
+        if (responses.some((response) => !response.ok)) {
+          throw new Error("A menu service returned an error");
+        }
+
+        const [tables, cats, settings] = await Promise.all(responses.map((response) => response.json()));
+        const valid = tables.some((table: any) => String(table.number) === tableNumber);
+        setTableValid(valid);
+        setCategories(cats);
+        setGstPercent(settings.gstPercent);
+        if (cats.length > 0) setActiveCategory(cats[0].id);
+      } catch {
+        setLoadError(true);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [tableNumber]);
@@ -58,6 +66,19 @@ function MenuContent({ tableNumber }: { tableNumber: string }) {
           <div className="w-12 h-12 rounded-full gold-gradient" />
           <p className="text-white/50 text-sm">Loading menu...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+        <AlertCircle size={48} className="text-red-400 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Menu Unavailable</h1>
+        <p className="text-white/50 max-w-sm mb-5">We couldn&apos;t load the table or menu details. Please try again or ask restaurant staff for help.</p>
+        <button onClick={() => window.location.reload()} className="gold-gradient text-charcoal-950 rounded-xl px-5 py-2.5 font-semibold">
+          Try again
+        </button>
       </div>
     );
   }
