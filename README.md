@@ -4,26 +4,24 @@ A complete restaurant QR ordering + admin management app (Next.js, TypeScript, T
 
 ## Requirements
 - Node.js 18+ installed (https://nodejs.org)
+- A PostgreSQL database (Neon is recommended for Vercel deployments)
 
-## Setup (Windows CMD)
+## Database setup
 
-Open Command Prompt in this project folder, then run each command one by one:
+Create a Neon project, then copy `.env.example` to `.env`. Set `DATABASE_URL` to Neon’s pooled connection string and `DIRECT_URL` to its unpooled connection string. Keep both URLs private.
+
+Apply the PostgreSQL migrations and seed a new, empty database:
 
 ```
 npm install
-```
-
-```
-npx prisma migrate dev --name init
-```
-
-```
+npm run db:migrate
 npm run seed
-```
-
-```
 npm run dev
 ```
+
+`npm run seed` clears and recreates the menu, tables, settings, and demo order. Run it only on a new database, not one containing production data.
+
+For Vercel, add `DATABASE_URL` and `DIRECT_URL` in Project Settings → Environment Variables, then redeploy. Run `npm run db:migrate` against the Neon database before deploying schema changes.
 
 ## Using the app
 
@@ -44,6 +42,5 @@ Customers can select cash, UPI, or card at checkout. This project does not inclu
 Set `OPENAI_API_KEY` in `.env` to enable generated dish answers. `OPENAI_MODEL` is optional and defaults to `gpt-4o-mini`. Without a key, the guide answers from the dish's menu description, category, dietary label, preparation time, price, and availability. It does not provide recipes or cooking instructions; ask restaurant staff about ingredients and allergens.
 
 ## Notes
-- Database file is `prisma/dev.db` (SQLite). Delete it and re-run migrate + seed to reset all data.
 - GST percentage is configurable in Admin → Settings and is applied server-side to every order.
 - All prices/totals are calculated on the server, never trusted from the browser.

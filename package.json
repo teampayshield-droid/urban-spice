@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "seed": "tsx prisma/seed.ts",
+    "db:migrate": "prisma migrate deploy",
+    "seed": "prisma db seed",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -29,5 +30,8 @@
     "postcss": "8.4.41",
     "autoprefixer": "10.4.19",
     "tsx": "4.16.5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
